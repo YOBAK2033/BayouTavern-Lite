@@ -1,0 +1,10 @@
+{
+  "name": "BayouTavern Lite",
+  "short_name": "BayouTavern",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#0f172a",
+  "lang": "zh-CN"
+}
