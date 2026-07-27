@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../hooks/useApp';
+import { safeSetLocalStorage } from '../../utils/safeStorage';
 
 export function TopBar() {
   const { state, dispatch } = useApp();
@@ -16,6 +17,10 @@ export function TopBar() {
   const activeBtn = isDark ? 'bg-[#3a5a3a] text-[#6ecf6e]' : 'bg-[#d4f5d4] text-[#2a7a2a]';
   const inactiveBtn = isDark ? 'text-[#999] hover:bg-[#3a3a3a]' : 'text-[#555] hover:bg-[#e0e0e0]';
   const themeBtn = isDark ? 'bg-[#3a3a3a] text-[#ccc] hover:bg-[#4a4a4a]' : 'bg-[#e0e0e0] text-[#444] hover:bg-[#d0d0d0]';
+  const toggleTheme = () => {
+    safeSetLocalStorage('jg2_theme_preference_set', '1');
+    dispatch({ type: 'SET_THEME', theme: isDark ? 'light' : 'dark' });
+  };
 
   return (
     <header className={"h-12 flex-shrink-0 flex items-center justify-between px-4 border-b " + bg}>
@@ -42,7 +47,7 @@ export function TopBar() {
             {tab.label}
           </button>
         ))}
-        <button onClick={() => dispatch({ type: 'SET_THEME', theme: isDark ? 'light' : 'dark' })}
+        <button onClick={toggleTheme}
           className={"ml-1 px-2 py-1 text-xs rounded transition-colors " + themeBtn}
           title={isDark ? '切换到日间模式' : '切换到夜间模式'}>
           {isDark ? '☀' : '🌙'}

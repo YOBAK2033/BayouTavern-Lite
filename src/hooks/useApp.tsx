@@ -90,7 +90,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     Stores.getUISettings().then((settings) => {
       if (settings) {
-        if (settings.theme) dispatch({ type: 'SET_THEME', theme: settings.theme });
+        if (settings.theme) {
+          // A pre-light-theme installation has no way to distinguish the old
+          // default dark mode from an explicit user choice. Migrate only when
+          // the user has not toggled the theme before.
+          const hasExplicitThemePreference = safeGetLocalStorage('jg2_theme_preference_set') === '1';
+          dispatch({ type: 'SET_THEME', theme: hasExplicitThemePreference ? settings.theme : 'light' });
+        }
         if (settings.wallpaper) dispatch({ type: 'SET_WALLPAPER', config: settings.wallpaper });
         if (settings.boldColorize !== undefined) dispatch({ type: 'SET_BOLD_COLORIZE', enabled: settings.boldColorize });
         if (settings.debugMode !== undefined && settings.debugMode !== initialState.debugMode)
