@@ -276,7 +276,7 @@ export function CharacterManager() {
             </div>
 
             {characters.length === 0 && !showForm && (
-              <p className={"text-sm text-center py-8 " + txt2}>还没有角色。点"新建角色"开始。</p>
+              <p className={"text-sm text-center py-8 " + txt2}>当前无角色卡，请“新建角色”或“导入角色”开始游玩。</p>
             )}
 
             {showForm && editing && (
