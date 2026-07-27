@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/inline-single-file.mjs",
     "test": "vitest run",
     "preview": "vite preview"
   },

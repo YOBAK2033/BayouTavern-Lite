@@ -17,7 +17,7 @@ async function bootstrap() {
       <App />
     </React.StrictMode>,
   );
-  if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     void navigator.serviceWorker.register('./sw.js', { scope: './' });
   }
 }
