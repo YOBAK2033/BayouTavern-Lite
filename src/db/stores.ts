@@ -410,7 +410,7 @@ export interface UISettings {
 export async function getUISettings(): Promise<UISettings | null> { return uiSettingsStore.getItem<UISettings>('settings'); }
 export async function setUISettings(settings: Partial<UISettings>): Promise<void> {
   const existing = (await getUISettings()) || {
-    theme: 'dark' as const,
+    theme: 'light' as const,
     wallpaper: { image: '', overlayOpacity: 0.7, overlayMode: 'dark' as const },
   };
   await uiSettingsStore.setItem('settings', { ...existing, ...settings });

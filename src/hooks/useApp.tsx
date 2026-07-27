@@ -17,7 +17,7 @@ const initialState: AppState = {
   currentConversationId: null,
   isMobile: false,
   sidebarOpen: true,
-  theme: 'dark',
+  theme: 'light',
   wallpaper: { image: '', overlayOpacity: 0.7, overlayMode: 'dark' },
   boldColorize: true,
   debugMode: false,
