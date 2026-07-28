@@ -4,6 +4,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { SettingsPage } from './components/settings/SettingsPage';
 import { CharacterManager } from './components/characters/CharacterManager';
+import { TutorialPanel } from './components/characters/TutorialPanel';
 
 import { ChatArea } from './components/chat/ChatArea';
 
@@ -14,6 +15,7 @@ function AppInner() {
   const renderMainContent = () => {
     switch (state.activeView) {
       case 'chat': return <ChatArea />;
+      case 'tutorial': return <TutorialPanel />;
       case 'models': return <SettingsPage />;
       case 'characters': return <CharacterManager />;
       case 'worldbook': return <CharacterManager />;

@@ -2,7 +2,7 @@
 
 export type MessageRole = 'user' | 'assistant' | 'system';
 
-export type ViewType = 'chat' | 'characters' | 'models' | 'worldbook';
+export type ViewType = 'chat' | 'tutorial' | 'characters' | 'models' | 'worldbook';
 
 export type ThemeMode = 'light' | 'dark';
 

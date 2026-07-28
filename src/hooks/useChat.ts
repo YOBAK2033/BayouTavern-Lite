@@ -302,17 +302,17 @@ export function useChat(deps: UseChatDeps) {
       }
     }
 
-    if (deps.memoryEnabled) {
-      const mems = searchedMemories || [];
-      if (mems.length > 0) {
-        metadata.memoryCount = mems.length;
-        const memoryText = mems.map((m: any) => {
-          const d = new Date(m.timestamp).toLocaleDateString('zh-CN');
-          return `[${d}] ${m.content}`;
-        }).join('\n');
-        const prefix = (deps.tplMemoryPrefix || DEFAULT_TPL_MEMORY_PREFIX).replace('{content}', memoryText);
-        messages.push({ role: 'system', content: prefix });
-      }
+    // Existing memory remains available to the main model even when the
+    // clerk switch is off. The switch only pauses creation of new summaries.
+    const mems = searchedMemories || [];
+    if (mems.length > 0) {
+      metadata.memoryCount = mems.length;
+      const memoryText = mems.map((m: any) => {
+        const d = new Date(m.timestamp).toLocaleDateString('zh-CN');
+        return `[${d}] ${m.content}`;
+      }).join('\n');
+      const prefix = (deps.tplMemoryPrefix || DEFAULT_TPL_MEMORY_PREFIX).replace('{content}', memoryText);
+      messages.push({ role: 'system', content: prefix });
     }
 
     for (const node of recentNodes) {
@@ -469,7 +469,9 @@ export function useChat(deps: UseChatDeps) {
       
       // Keyword search for relevant memories
       const keywords = options?.hidden ? [] : extractKeywords(userInput);
-      const relevantMemories = deps.memoryEnabled && conv.id && !options?.hidden ? await searchMemories(conv.id, keywords, deps.maxMemoryEntries || 5) : [];
+      // Retrieval stays enabled so existing memory can still guide the main
+      // model while the clerk switch is off.
+      const relevantMemories = conv.id && !options?.hidden ? await searchMemories(conv.id, keywords, deps.maxMemoryEntries || 5) : [];
       
       const assembled = await assembleContext(relevantMemories, userNode.id, userInput);
       lastPromptRef.current = [...assembled.messages, { role: 'user', content: userInput }];

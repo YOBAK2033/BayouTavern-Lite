@@ -12,6 +12,7 @@ import { cleanupUnreferencedImageAssets } from '../../db';
 import { createFullBackup, createCharacterBackup, hasExistingProjectData, restoreFullBackup, restoreCharacterBackup, clearProjectData } from '../../utils/dataTransfer';
 import type { ModelConfig } from '../../types';
 import { compressImage, isImageSource } from '../../utils/image';
+import { fetchAvailableModels } from '../../utils/modelDiscovery';
 
 function MiniAvatar({ avatar }: { avatar?: string }) {
   if (isImageSource(avatar)) {
@@ -95,22 +96,28 @@ export function SettingsPage() {
     setEditing(null); setShowForm(false);
   };
 
-  const [fetchingModels, setFetchingModels] = useState<Record<string, boolean>>({});
-  const [modelList, setModelList] = useState<Record<string, string[]>>({});
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
+  const [fetchingModelOptions, setFetchingModelOptions] = useState(false);
+  const [modelFetchError, setModelFetchError] = useState('');
 
-  const handleFetchModels = async (model: ModelConfig) => {
-    setFetchingModels((prev) => ({ ...prev, [model.id]: true }));
+  const handleFetchModelOptions = async () => {
+    if (!editing) return;
+    setFetchingModelOptions(true);
+    setModelFetchError('');
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      const resp = await fetch(model.baseUrl.replace(/\/+$/, '') + '/models', {
-        headers: { Authorization: `Bearer ${model.apiKey}` },
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const names = (data.data || []).map((m: any) => m.id).filter(Boolean);
-        setModelList((prev) => ({ ...prev, [model.id]: names }));
-      }
-    } catch {}
-    setFetchingModels((prev) => ({ ...prev, [model.id]: false }));
+      const controller = new AbortController();
+      timeout = setTimeout(() => controller.abort(), PING_TIMEOUT);
+      const options = await fetchAvailableModels(editing.baseUrl || '', editing.apiKey || '', controller.signal);
+      setModelOptions(options);
+      if (options.length === 0) setModelFetchError('接口没有返回可选模型，请检查地址或手动填写模型名称。');
+    } catch (error: any) {
+      setModelOptions([]);
+      setModelFetchError(error?.name === 'AbortError' ? '获取模型超时。' : (error?.message || '获取模型失败，请检查地址、Key 和跨域设置。'));
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      setFetchingModelOptions(false);
+    }
   };
 
   const setActive = (id: string) => {
@@ -130,23 +137,27 @@ export function SettingsPage() {
 
   const handlePing = async (model: ModelConfig) => {
     setPingResult((prev) => ({ ...prev, [model.id]: '⏳' }));
+    const startedAt = performance.now();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT);
+      timeout = setTimeout(() => controller.abort(), PING_TIMEOUT);
       const resp = await fetch(model.baseUrl.replace(/\/+$/, '') + '/models', {
         headers: { Authorization: `Bearer ${model.apiKey}` }, signal: controller.signal,
       });
-      clearTimeout(timeout);
+      const latency = Math.max(1, Math.round(performance.now() - startedAt));
       if (resp.ok) {
-        setPingResult((prev) => ({ ...prev, [model.id]: `✅ ${resp.status}` }));
-        await updateModel(model.id, { latency: 100 });
+        setPingResult((prev) => ({ ...prev, [model.id]: `✅ ${latency}ms` }));
+        await updateModel(model.id, { latency });
       } else {
-        setPingResult((prev) => ({ ...prev, [model.id]: `❌ ${resp.status}` }));
+        setPingResult((prev) => ({ ...prev, [model.id]: `❌ ${resp.status} · ${latency}ms` }));
         await updateModel(model.id, { latency: -3 });
       }
     } catch {
       setPingResult((prev) => ({ ...prev, [model.id]: '❌ 超时' }));
       await updateModel(model.id, { latency: -2 });
+    } finally {
+      if (timeout) clearTimeout(timeout);
     }
   };
 
@@ -334,8 +345,23 @@ export function SettingsPage() {
                     value={editing.baseUrl || ''} onChange={(e) => setEditing((prev) => ({ ...prev, baseUrl: e.target.value }))}/>
                   <input placeholder="API Key" type="password" className={"w-full px-2 py-1.5 rounded text-xs border " + inputCls}
                     value={editing.apiKey || ''} onChange={(e) => setEditing((prev) => ({ ...prev, apiKey: e.target.value }))}/>
-                  <input placeholder="模型名称" className={"w-full px-2 py-1.5 rounded text-xs border " + inputCls}
-                    value={editing.defaultModel || ''} onChange={(e) => setEditing((prev) => ({ ...prev, defaultModel: e.target.value }))}/>
+                  <div className="flex gap-2">
+                    <input placeholder="模型名称（也可手动填写）" className={"min-w-0 flex-1 px-2 py-1.5 rounded text-xs border " + inputCls}
+                      value={editing.defaultModel || ''} onChange={(e) => setEditing((prev) => ({ ...prev, defaultModel: e.target.value }))}/>
+                    <button type="button" onClick={() => void handleFetchModelOptions()} disabled={fetchingModelOptions}
+                      className={"px-2.5 py-1.5 text-xs rounded whitespace-nowrap " + btn}>
+                      {fetchingModelOptions ? '获取中…' : '获取模型'}
+                    </button>
+                  </div>
+                  {modelOptions.length > 0 && (
+                    <select aria-label="选择已拉取模型" className={"w-full px-2 py-1.5 rounded text-xs border " + inputCls}
+                      value={modelOptions.includes(editing.defaultModel || '') ? editing.defaultModel : ''}
+                      onChange={(e) => setEditing((prev) => ({ ...prev, defaultModel: e.target.value }))}>
+                      <option value="">从接口返回的模型中选择</option>
+                      {modelOptions.map((modelName) => <option key={modelName} value={modelName}>{modelName}</option>)}
+                    </select>
+                  )}
+                  {modelFetchError && <p className="text-[10px] text-amber-600">{modelFetchError}</p>}
                   <div className="flex gap-2 items-center flex-wrap">
                     <label className={"text-[10px] " + txt2}>Ctx:</label>
                     <input type="number" min={1000} max={128000} step={1000} className={"w-20 px-2 py-1 rounded text-xs border " + inputCls}
@@ -360,7 +386,6 @@ export function SettingsPage() {
                   </div>
                 </div>
               )}
-              <p className={"text-[10px] mt-3 leading-5 " + txt2}>主模型配置推荐使用<a href="https://platform.deepseek.com/usage" target="_blank" rel="noreferrer" className="text-[#3cb371] underline">DeepSeek模型</a>，低甲，但需要注意每日9:00～12:00 和 14:00～18:00为峰值定价，为平时价格2倍。</p>
             </div>
 
             {/* 上下文配置 */}

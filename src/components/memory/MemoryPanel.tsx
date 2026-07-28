@@ -8,6 +8,8 @@ import type { ModelConfig } from '../../types';
 import { getStoredSubAIModels, saveStoredSubAIModels } from '../../utils/subAI';
 import { SUB_AI_SYSTEM_PROMPT, PING_TIMEOUT, SAMPLING_PRESETS } from '../../utils/constants';
 import { isImageSource } from '../../utils/image';
+import { fetchAvailableModels } from '../../utils/modelDiscovery';
+import { safeSetLocalStorage } from '../../utils/safeStorage';
 
 function MiniAvatar({ avatar }: { avatar?: string }) {
   if (isImageSource(avatar)) {
@@ -29,6 +31,9 @@ export function MemoryPanel() {
   const [subAIPrompt, setSubAIPrompt] = useState(state.subAIConfig.customSystemPrompt || SUB_AI_SYSTEM_PROMPT);
   const [saved, setSaved] = useState(false);
   const [subAIPing, setSubAIPing] = useState<Record<string, string>>({});
+  const [subAIModelOptions, setSubAIModelOptions] = useState<string[]>([]);
+  const [fetchingSubAIModels, setFetchingSubAIModels] = useState(false);
+  const [subAIModelFetchError, setSubAIModelFetchError] = useState('');
 
   useEffect(() => {
     void getStoredSubAIModels().then(setSubAIModels);
@@ -110,6 +115,26 @@ export function MemoryPanel() {
     setShowSubAIForm(false);
   };
 
+  const handleFetchSubAIModelOptions = async () => {
+    if (!editingSubAIModel) return;
+    setFetchingSubAIModels(true);
+    setSubAIModelFetchError('');
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const controller = new AbortController();
+      timeout = setTimeout(() => controller.abort(), PING_TIMEOUT);
+      const options = await fetchAvailableModels(editingSubAIModel.baseUrl || '', editingSubAIModel.apiKey || '', controller.signal);
+      setSubAIModelOptions(options);
+      if (options.length === 0) setSubAIModelFetchError('接口没有返回可选模型，请检查地址或手动填写模型名称。');
+    } catch (error: any) {
+      setSubAIModelOptions([]);
+      setSubAIModelFetchError(error?.name === 'AbortError' ? '获取模型超时。' : (error?.message || '获取模型失败，请检查地址、Key 和跨域设置。'));
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      setFetchingSubAIModels(false);
+    }
+  };
+
   const handleDeleteSubAIModel = async (id: string) => {
     const next = subAIModels.filter((item) => item.id !== id);
     const nextActiveId = id === activeSubAIModelId ? (next[0]?.id || '') : activeSubAIModelId;
@@ -181,7 +206,7 @@ export function MemoryPanel() {
             <label className="flex items-center gap-2 text-xs cursor-pointer">
               <span className={txt}>启用</span>
               <input type="checkbox" checked={state.subAIConfig.enabled}
-                onChange={(e) => dispatch({ type: 'UPDATE_SUB_AI_CONFIG', config: { enabled: e.target.checked } })}
+                onChange={(e) => { safeSetLocalStorage('jg2_memory_preference_set', '1'); dispatch({ type: 'UPDATE_SUB_AI_CONFIG', config: { enabled: e.target.checked } }); }}
                 className="rounded accent-[#3cb371]" />
             </label>
           </div>
@@ -228,7 +253,17 @@ export function MemoryPanel() {
               <input placeholder="名称" className={"w-full px-3 py-2 rounded-lg text-xs border "+inputCls} value={editingSubAIModel.name || ''} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, name:e.target.value}))}/>
               <input placeholder="Base URL" className={"w-full px-3 py-2 rounded-lg text-xs border "+inputCls} value={editingSubAIModel.baseUrl || ''} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, baseUrl:e.target.value}))}/>
               <input placeholder="API Key" type="password" className={"w-full px-3 py-2 rounded-lg text-xs border "+inputCls} value={editingSubAIModel.apiKey || ''} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, apiKey:e.target.value}))}/>
-              <input placeholder="模型名称" className={"w-full px-3 py-2 rounded-lg text-xs border "+inputCls} value={editingSubAIModel.defaultModel || ''} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, defaultModel:e.target.value}))}/>
+              <div className="flex gap-2">
+                <input placeholder="模型名称（也可手动填写）" className={"min-w-0 flex-1 px-3 py-2 rounded-lg text-xs border "+inputCls} value={editingSubAIModel.defaultModel || ''} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, defaultModel:e.target.value}))}/>
+                <button type="button" onClick={() => void handleFetchSubAIModelOptions()} disabled={fetchingSubAIModels} className={"px-2.5 py-2 text-xs rounded-lg whitespace-nowrap "+btn}>{fetchingSubAIModels ? '获取中…' : '获取模型'}</button>
+              </div>
+              {subAIModelOptions.length > 0 && (
+                <select aria-label="选择已拉取的记忆官模型" className={"w-full px-3 py-2 rounded-lg text-xs border "+inputCls} value={subAIModelOptions.includes(editingSubAIModel.defaultModel || '') ? editingSubAIModel.defaultModel : ''} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, defaultModel:e.target.value}))}>
+                  <option value="">从接口返回的模型中选择</option>
+                  {subAIModelOptions.map((modelName) => <option key={modelName} value={modelName}>{modelName}</option>)}
+                </select>
+              )}
+              {subAIModelFetchError && <p className="text-[10px] text-amber-600">{subAIModelFetchError}</p>}
               <label className={"text-[10px] block "+txt2}>Max context tokens: {editingSubAIModel.maxContextTokens ?? 4000}
                 <input type="number" min={1000} max={128000} step={1000} className={"w-full mt-1 px-2 py-1 rounded border text-xs "+inputCls} value={editingSubAIModel.maxContextTokens ?? 4000} onChange={(e)=>setEditingSubAIModel((prev)=>({...prev, maxContextTokens:parseInt(e.target.value)||4000}))}/>
               </label>
@@ -253,7 +288,6 @@ export function MemoryPanel() {
               </div>
             </div>
           )}
-          <p className={"text-[10px] mt-3 leading-5 " + txt2}>推荐使用DeepSeeK，亦可使用免费模型，例如<a href="https://agnes-ai.com/" target="_blank" rel="noreferrer" className="text-[#3cb371] underline">智谱GLM4.7</a>。</p>
         </div>
 
         {/* Clerk prompt */}

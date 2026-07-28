@@ -278,14 +278,15 @@ export function ChatArea() {
   if (!conversation) {
     return (
       <div className={"relative flex-1 overflow-y-auto " + chatBg}>
-        <div className="min-h-full max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-12">
+      <div className="min-h-full max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-12 flex flex-col">
+        <div className="flex-1">
           <div className="text-center mb-9">
             <div className="flex justify-center mb-4">
               <div className={"w-[min(65vw,220px)] rounded-2xl overflow-hidden border shadow-sm " + (isDark ? 'border-[#3a3a3a]' : 'border-[#e2e2e2]')}>
                 <img src="./welcome.gif" alt="欢迎表情" className="block w-full h-auto object-contain" />
               </div>
             </div>
-            <p className={"mt-2 text-sm leading-7 " + txt2}><strong>欢迎来到😊BayouTavern Lite😊</strong><br/>可新建对话选择角色卡游玩，或创建自己的角色卡进行游玩。</p>
+            <p className={"mt-2 text-sm leading-7 " + txt2}><strong>欢迎来到😊BayouTavern Lite😊</strong><br/>可新建对话选择角色卡游玩，或创建自己的角色卡进行游玩。<br/>如果你是小白，请先查看左上角的教程一步步操作哦~</p>
           </div>
           {characters.length === 0 ? (
             <div className={"text-center text-sm space-y-2 " + txt2}>
@@ -309,7 +310,8 @@ export function ChatArea() {
             </div>
           )}
         </div>
-        <p className={"absolute left-1/2 -translate-x-1/2 bottom-3 text-center text-[10px] whitespace-nowrap " + txtInfo}>本项目Yobak创建并负责后续维护。</p>
+        <p className={"mt-8 pb-1 text-center text-[10px] " + txtInfo}>本项目Yobak创建并负责后续维护。</p>
+        </div>
       </div>
     );
   }

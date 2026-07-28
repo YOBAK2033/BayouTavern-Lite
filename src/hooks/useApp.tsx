@@ -146,29 +146,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { setLowRateMode(state.lowRateMode); }, [state.lowRateMode]);
 
-  // Seed and normalize the single built-in DeepSeek starter model.
+  // Seed the single built-in DeepSeek starter model without forcing a model name.
   useEffect(() => {
     void (async () => {
       const existing = await Stores.getAllModels();
-      const starterModels = existing.filter((model) =>
-        model.id === 'default-deepseek'
-        || (model.baseUrl.replace(/\/+$/, '') === 'https://api.deepseek.com'
-          && /deepseek/i.test(model.name)
-          && model.defaultModel === 'deepseek-v4-pro')
-      );
-      if (starterModels.length > 0) {
-        const keeper = starterModels.find((model) => model.apiKey.trim()) || starterModels[0];
-        await Stores.updateModel(keeper.id, { name: 'DeepSeek', defaultModel: 'deepseek-v4-pro', baseUrl: 'https://api.deepseek.com' });
-        await Promise.all(starterModels.filter((model) => model.id !== keeper.id).map((model) => Stores.deleteModel(model.id)));
-        safeSetLocalStorage('jg2_ds_seeded', '1');
-        window.dispatchEvent(new Event('jg2:models-changed'));
-      } else if (existing.length === 0) {
+      if (existing.length === 0) {
         await Stores.addModel({
           id: 'default-deepseek',
           name: 'DeepSeek',
           baseUrl: 'https://api.deepseek.com',
           apiKey: '',
-          defaultModel: 'deepseek-v4-pro',
+          defaultModel: '',
           latency: -1,
           maxContextTokens: 64000,
           temperature: 0.8,
@@ -176,6 +164,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
           safeSetLocalStorage('jg2_ds_seeded', '1');
           window.dispatchEvent(new Event('jg2:models-changed'));
+      }
+
+      // One-time cleanup for the old built-in starter that forced deepseek-v4-pro.
+      if (safeGetLocalStorage('jg2_ds_model_name_reset') !== '1') {
+        const legacyStarter = existing.find((model) => model.id === 'default-deepseek' && model.defaultModel === 'deepseek-v4-pro');
+        if (legacyStarter) {
+          await Stores.updateModel(legacyStarter.id, { defaultModel: '' });
+          safeSetLocalStorage('jg2_ds_model_name_reset', '1');
+          window.dispatchEvent(new Event('jg2:models-changed'));
+        } else {
+          safeSetLocalStorage('jg2_ds_model_name_reset', '1');
+        }
       }
     })();
   }, []);
