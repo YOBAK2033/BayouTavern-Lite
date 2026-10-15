@@ -1,8 +1,10 @@
-# BayouTavern Lite 2.0
+# BayouTavern Lite 经典版
 
 一个以浏览器为运行环境、以本地数据为优先的 AI 角色互动沙盒。项目面向喜欢角色卡、世界书、状态追踪和长期记忆的用户，提供一个可以直接游玩的轻量化界面。
 
-> 2.0 是独立版本。它基于旧版思路重构，但不与根目录 v1.2 进行数据迁移；后续开发只在 `2.0/` 目录进行。
+> 本仓库保留经典版程序与历史数据格式。新版 **BayouTavern Lite 2.0** 已独立发布在 [BayouTavern-Lite-2.0](https://github.com/YOBAK2033/BayouTavern-Lite-2.0)，两者是不同程序，请按需要选择。旧 Release 的数字标签是历史构建编号，不代表新版 2.0。
+>
+> 作者与维护：**Bayaga_x256**。
 
 ## 在线使用与下载
 
@@ -14,7 +16,7 @@ GitHub Pages 自动发布生产构建结果；标记一个 `v*` 版本号后，G
 
 ## 项目定位
 
-BayouTavern Lite 2.0 是纯前端应用：
+经典版是纯前端应用：
 
 - 角色卡、世界书、对话、记忆、状态栏和拓展库数据默认保存在当前浏览器的 IndexedDB。
 - 主模型与记忆官模型可以分别配置，API Key 不会随数据导出。
@@ -119,8 +121,9 @@ dist/donate-qr.jpg          # Pages/PWA 使用的静态资源副本
 创建版本 Release：
 
 ```bash
-git tag v2.0.0
-git push origin v2.0.0
+# 新发布使用经典版标签；已有历史标签保留
+git tag v1-classic.1
+git push origin v1-classic.1
 ```
 
 `.github/workflows/release.yml` 会测试并构建项目，然后把单文件命名为 `BayouTavern-Lite.html` 上传到 GitHub Release。
@@ -128,7 +131,7 @@ git push origin v2.0.0
 ## 项目结构
 
 ```text
-2.0/
+./
 ├── index.html
 ├── package.json
 ├── vite.config.js
@@ -155,11 +158,11 @@ git push origin v2.0.0
 
 ## 使用声明与免责
 
-本项目由 Yobak 创建并负责后续维护，开发参考了 B 站 Up 橙橙乔乔的 [Easy酒馆Pro](https://github.com/muqiao1234-ui/easy-jiuguan-pro)，在此表示感谢。
+本项目由 Bayaga_x256 创建并负责后续维护，开发参考了 B 站 Up 橙橙乔乔的 [Easy酒馆Pro](https://github.com/muqiao1234-ui/easy-jiuguan-pro)，在此表示感谢。
 
 本项目仅提供浏览器端工具，不对模型生成内容作保证、背书或事实判断。请勿将本项目用于违法违规用途，也请注意保护自己的 API Key、角色卡和私人对话数据。
 
-项目唯一正版官方发布渠道为 B 站 Bayou_x264。
+项目唯一正版官方发布渠道为 B 站 Bayaga_x256。
 
 ## 许可证
 

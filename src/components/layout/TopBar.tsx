@@ -48,7 +48,7 @@ export function TopBar() {
         <button onClick={() => dispatch({ type: 'SET_VIEW', view: 'chat' })}
           className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
           aria-label="返回主页" title="返回主页">
-          <h1 className={"text-base font-semibold " + txt}>BayouTavern Lite</h1><span className={"px-1.5 py-0.5 rounded text-[9px] font-medium " + (isDark ? 'bg-[#3a3a3a] text-[#aaa]' : 'bg-[#e5e5e5] text-[#777]')}>v1.1</span>
+          <h1 className={"text-base font-semibold " + txt}>BayouTavern Lite</h1><span className={"px-1.5 py-0.5 rounded text-[9px] font-medium " + (isDark ? 'bg-[#3a3a3a] text-[#aaa]' : 'bg-[#e5e5e5] text-[#777]')}>经典版</span>
         </button>
       </div>
       <div className="flex items-center gap-1">

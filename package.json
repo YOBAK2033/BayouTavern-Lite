@@ -2,7 +2,7 @@
   "name": "easy-jiuguan-2",
   "private": true,
   "version": "2.0.0",
-  "description": "Easy酒馆 2.0 - 本地优先的 AI 角色扮演沙盒，单文件 PWA",
+  "description": "BayouTavern Lite 经典版 - 历史版角色互动工具",
   "license": "MIT",
   "type": "module",
   "scripts": {

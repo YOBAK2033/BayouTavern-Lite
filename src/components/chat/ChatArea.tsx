@@ -310,7 +310,7 @@ export function ChatArea() {
             </div>
           )}
         </div>
-        <p className={"mt-8 pb-1 text-center text-[10px] " + txtInfo}>本项目Yobak创建并负责后续维护。</p>
+        <p className={"mt-8 pb-1 text-center text-[10px] " + txtInfo}>本项目由 Bayaga_x256 创建并负责后续维护。</p>
         </div>
       </div>
     );

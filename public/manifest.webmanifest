@@ -1,6 +1,6 @@
 {
-  "name": "BayouTavern Lite",
-  "short_name": "BayouTavern",
+  "name": "BayouTavern Lite 经典版",
+  "short_name": "BTavern 经典版",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
